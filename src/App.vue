@@ -7,6 +7,9 @@ import dayjs from "dayjs";
 import ru from "dayjs/locale/ru";
 dayjs.locale(ru);
 
+let timerId = null;
+const isRunning = ref(false);
+
 // ТОКЕН ДЛЯ ДОСТУПА К API
 const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
 
@@ -204,8 +207,6 @@ function receivingWarehousesBarcode(arrayGoods) {
 }
 
 function startFilters() {
-  console.log("startFilters");
-
   warehousesGoodsTypePackagingBoxMonopallets.value = [];
   matchedWarehouseIDs.value = [];
   unmatchedWarehouseIDs.value = [];
@@ -221,6 +222,18 @@ function startFilters() {
 
   receivingWarehousesBarcode(arrayGoods);
 }
+
+const handleStart = () => {
+  isRunning.value = true;
+  startFilters();
+  timerId = setInterval(startFilters, 10000); // Вызывать функцию каждые 10 секунд
+};
+
+const handleStop = () => {
+  isRunning.value = false;
+  clearInterval(timerId); // Остановить таймер
+};
+
 
 // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
 axios.get("https://supplies-api.wildberries.ru/api/v1/warehouses", {
@@ -405,15 +418,29 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
       </a-row>
 
       <a-row>
-        <a-col>
+        <a-col :span="3">
           <a-form-item>
             <a-button
               type="primary"
               size="large"
               html-type="submit"
-              @click="startFilters"
+              :disabled="isRunning"
+              @click="handleStart"
             >
-              Сохранить
+              Запустить
+            </a-button>
+          </a-form-item>
+        </a-col>
+
+        <a-col :span="3">
+          <a-form-item>
+            <a-button
+              size="large"
+              html-type="submit"
+              :disabled="!isRunning"
+              @click="handleStop"
+            >
+              Остановить
             </a-button>
           </a-form-item>
         </a-col>
@@ -422,7 +449,9 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
 
     <div v-if="filteredDataFinish.length > 0">
       <b>Подходят склады:</b>
-      <div v-for="(item, index) in filteredDataFinish" :key="index">
+      <div v-for="(item, index) in filteredDataFinish" :key="index"
+           :style="{ 'background-color': item.coefficient === 0 ? '#cafcca' : (item.coefficient === 1 ? '#fafad2' : '') }"
+      >
         Время: {{ getCurrentDateTime() }} - Коэффициент: {{ item.coefficient }} - Дата: {{ dayjs(item.date).format('DD.MM.YYYY') }} - Склад: {{item.warehouseName }} - Поставка: {{ item.boxTypeName }}
       </div>
     </div>
