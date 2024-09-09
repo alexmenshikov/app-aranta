@@ -84,15 +84,18 @@ function creatingDateRange(options) {
   const { from, to } = options;
 
   const currentDate = new Date();
-  const futureDateFirst = new Date(currentDate);
-  const futureDateSecond = new Date(currentDate);
+  const utcTime = Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate(), 0, 0, 0, 0);
+  const utcCurrentDate = new Date(utcTime);
 
-  futureDateFirst.setDate(currentDate.getDate() + from);
-  futureDateSecond.setDate(currentDate.getDate() + to);
+  const futureDateFirst = new Date(utcCurrentDate);
+  const futureDateSecond = new Date(utcCurrentDate);
+
+  futureDateFirst.setUTCDate(utcCurrentDate.getUTCDate() + from);
+  futureDateSecond.setUTCDate(utcCurrentDate.getUTCDate() + to);
 
   return [
-    dayjs(futureDateFirst),
-    dayjs(futureDateSecond)
+    dayjs(futureDateFirst.toISOString()),
+    dayjs(futureDateSecond.toISOString())
   ]
 }
 
@@ -103,43 +106,6 @@ const handleChange = (dates) => {
 
 // ФОРМАТ ОТОБРАЖЕНИЯ ДАТЫ
 const dateFormat = "DD.MM.YYYY";
-
-
-// function getDateFormat(withTime = true) {
-//   if (!withTime) {
-//     return "DD.MM.YY";
-//   }
-//   return "DD.MM.YY HH:mm:ss";
-// }
-
-// function selectAllWarehouses() {
-//   warehousesSelected.value = warehousesOptions.value.map(warehousesOption => warehousesOption.value);
-// }
-
-// function warehousesOptionsAllInfoSelected() {
-//   console.log('~ warehousesOptions: ', warehousesOptions.value);
-//   console.log('~ warehousesSelected: ', warehousesSelected.value);
-//
-//   return warehousesOptions.value.filter(obj => {
-//     warehousesSelected.value.includes(obj.value);
-//   })
-// }
-
-// +++++++++++++++
-// function warehousesOptionsAllInfoSelected() {
-//   return warehousesOptions.value.filter(obj => {
-//     return warehousesSelected.value.includes(obj.value);
-//   })
-// }
-// +++++++++++++++
-
-// const warehousesOptionsAllInfoSelected = ref([]);
-
-// watch(warehousesSelected, (newWarehousesSelected) => {
-//   warehousesOptionsAllInfoSelected.value = warehousesOptions.value.filter((obj) => {
-//     newWarehousesSelected.value.includes(obj.value);
-//   })
-// })
 
 function coefficientsGet() {
   const idsArray = matchedWarehouseIDs.value.map(warehouse => warehouse.ID);
@@ -155,36 +121,24 @@ function coefficientsGet() {
     }
   })
     .then(response => {
-      const finishFilterResult = [];
-
-      // response.data.forEach(element => {
-      //   finishFilterResult.push()
-      // })
-
       const filteredData = response.data.filter(item => {
         // Сравнение date с датами из массива dates
-        const isDateValid = dayjs(item.date) > dayjs(dates.value[0]) && dayjs(item.date) < dayjs(dates.value[1]);
+        const isDateValid = dayjs(item.date) >= dayjs(dates.value[0]) && dayjs(item.date) <= dayjs(dates.value[1]);
 
         // Сравнение coefficient с coefficientFrom и coefficientTo
         const isCoefficientValid = item.coefficient >= coefficientFrom.value && item.coefficient <= coefficientTo.value;
-
-        // Проверка условий для deliveryType
-        // const isDeliveryTypeValid = (deliveryType.value.canBox && item.canBox) || (deliveryType.value.canMonopallet && item.canMonopallet);
 
         // Сравнение с boxTypeName
         const isBoxTypeNameValid = (deliveryType.value.canBox && item.boxTypeName === "Короба") || (deliveryType.value.canMonopallet && item.boxTypeName === "Монопаллеты")
 
         // Возврат элемента, который соответствует всем условиям
-        // return isDateValid && isCoefficientValid && isBoxTypeNameValid;
         return isDateValid && isCoefficientValid && isBoxTypeNameValid;
       });
 
       // Вывод отфильтрованных элементов
-      // console.log("filteredData: ", filteredData);
       filteredDataFinish.value = filteredData;
     })
     .catch(error => {
-      // Обработка ошибки
       console.log(error);
     });
 }
@@ -247,25 +201,6 @@ function receivingWarehousesBarcode(arrayGoods) {
     .catch(error => {
       console.log(error);
     });
-
-  // СПИСОК С ПОДХОДЯЩИМИ СКЛАДАМИ
-  // matchedWarehouseIDs.value
-
-  // axios.get("https://supplies-api.wildberries.ru/api/v1/acceptance/coefficients", { params }, {
-  //   headers: {
-  //     "Authorization": `${apiToken}`
-  //   }
-  // })
-  //   .then(response => {
-  //     console.log("Ответ: ", response.data);
-  //     // warehousesOptions.value = response.data.map((warehouse) => ({
-  //     //   label: warehouse.name,
-  //     //   value: JSON.stringify(warehouse),
-  //     // }));
-  //   })
-  //   .catch(error => {
-  //     console.log(error);
-  //   });
 }
 
 function startFilters() {
@@ -274,20 +209,7 @@ function startFilters() {
   warehousesGoodsTypePackagingBoxMonopallets.value = [];
   matchedWarehouseIDs.value = [];
   unmatchedWarehouseIDs.value = [];
-  // if (warehousesSelected.value.length > 0 && nomenclatureSelected.value.length > 0 && numberPositions.value && coefficientFrom.value && coefficientTo.value) {
-  // if (warehousesSelected.value.length > 0 && nomenclatureSelected.value.length > 0) {
-  //   const arrayGoods = [];
-  //
-  //   nomenclatureSelected.value
-  //     .map(nomenclature => JSON.parse(nomenclature))
-  //     .flatMap(nomenclatureObject => nomenclatureObject.sizes ?? [])
-  //     .flatMap(sizeItem => sizeItem.skus ?? [])
-  //     .forEach(skusItem => {
-  //       arrayGoods.push({
-  //         quantity: numberPositions.value,
-  //         barcode: skusItem
-  //       });
-  //     });
+
   const arrayGoods = nomenclatureSelected.value
     .map(nomenclature => JSON.parse(nomenclature))
     .flatMap(nomenclatureObject => nomenclatureObject.sizes ?? [])
@@ -298,90 +220,7 @@ function startFilters() {
     }));
 
   receivingWarehousesBarcode(arrayGoods);
-  // }
-  // const barcodesSelectedItems = ref([]);
-
-  // nomenclatureSelected.value.forEach(nomenclature => {
-  //   // barcodesSelectedItems.value = nomenclatureOptions.value.filter(option => option.value === nomenclature);
-  //   barcodesSelectedItems.value = nomenclatureOptions.value.filter(option => option.value === nomenclature);
-  // })
-
-  // barcodesSelectedItems.value = nomenclatureSelected.value.map(nomenclature)
-
-
-  // barcodesSelectedItems.value = nomenclatureOptions.value
-  //   .filter(obj => nomenclatureSelected.value.includes(obj.value)) // Фильтруем объекты по совпадению значения 'name'
-  //   .map(obj => obj.infoWithApi.sizes[0].skus[0]); // Извлекаем значения 'barcode' для соответствующих объектов
-
-  // лежат баркоды в barcodesSelectedItems.value
-  // console.log('barcodesSelectedItems:', barcodesSelectedItems.value);
-
-  // const dataArray = [{
-  //   quantity: 1,
-  //   barcode: "2040581715663"
-  // }];
-
-
-
-  //   axios.post("https://supplies-api.wildberries.ru/api/v1/acceptance/options", dataArray, {
-  //     headers: {
-  //       "Authorization": `${apiToken}`
-  //     }
-  //   })
-  //     .then(response => {
-  //       console.log("response: ", response.data.result[0].warehouses);
-  //
-  //       // получили все склады где есть подходящие типы
-  //       warehousesFiltered.value = response.data.result[0].warehouses.filter(warehouse => warehouse.canBox || warehouse.canMonopallet);
-  //
-  //       // const tmp = warehousesOptionsAllInfoSelected();
-  //       // console.log('warehousesOptionsAllInfoSelected', tmp);
-  //
-  //       console.log("----: ", warehousesFiltered.value);
-  //
-  //       warehousesFiltered.value.forEach((warehouse1) => {
-  //         const foundMatch = warehousesOptionsAllInfoSelected().find(warehouse2 => warehouse1.warehouseID === warehouse2.infoWithApi.ID);
-  //
-  //         if (foundMatch) {
-  //           matchedWarehouseIDs.value.push(warehouse1);
-  //         } else {
-  //           unmatchedWarehouseIDs.value.push(warehouse1);
-  //         }
-  //       })
-  //
-  //
-  //
-  //       // matchedWarehouseIDs
-  //       // unmatchedWarehouseIDs
-  //
-  //       // warehousesFiltered.value = response.data.warehouses
-  //       //   .map(warehouse => {
-  //       //
-  //       //   })
-  //
-  //       // nomenclatureOptions.value = response.data.cards.map((nomenclature) => ({
-  //       //   infoWithApi: nomenclature,
-  //       //   label: nomenclature.vendorCode,
-  //       //   value: nomenclature.vendorCode,
-  //       // }));
-  //     })
-  //     .catch(error => {
-  //       console.log(error);
-  //     });
-  // }
 }
-
-// function warehousesChange(event) {
-//   if (event) {
-//     event.forEach(item => {
-//       console.log(item);
-//     })
-//   }
-// }
-
-// const setCopySiteOffersFromFinShowcaseSiteId = (event) => {
-//   emit("update:copySiteOffersFromFinShowcaseSiteId", event);
-// };
 
 // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
 axios.get("https://supplies-api.wildberries.ru/api/v1/warehouses", {
@@ -445,7 +284,15 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
           </a-form-item>
         </a-col>
 
-        <a-col :span="12">
+        <a-col :span="3">
+          <a-form-item label=" " name="removeSC">
+            <a-checkbox v-model:checked="removeSC">
+              Убрать СЦ
+            </a-checkbox>
+          </a-form-item>
+        </a-col>
+
+        <a-col :span="9">
           <a-form-item label="Номенклатуры" name="warehousesSelected">
             <a-select
               v-model:value="nomenclatureSelected"
@@ -462,7 +309,7 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
       </a-row>
 
       <a-row :gutter="24">
-        <a-col>
+        <a-col :span="4">
           <a-form-item>
             <a-button
               html-type="submit"
@@ -529,15 +376,8 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
             </a-checkbox>
           </a-form-item>
         </a-col>
-
-        <a-col :span="3">
-          <a-form-item label=" " name="removeSC">
-            <a-checkbox v-model:checked="removeSC">
-              Убрать СЦ
-            </a-checkbox>
-          </a-form-item>
-        </a-col>
-
+      </a-row>
+      <a-row :gutter="24">
         <a-col :span="6">
           <a-form-item label="Выбор недель" name="warehousesSelected"
           >
