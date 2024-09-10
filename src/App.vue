@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import axios from "axios";
 import { ConfigProvider as AConfigProvider } from "ant-design-vue";
 import ruRu from "ant-design-vue/es/locale/ru_RU";
@@ -11,7 +11,10 @@ let timerId = null;
 const isRunning = ref(false);
 
 // ТОКЕН ДЛЯ ДОСТУПА К API
-const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
+// const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
+
+// ТОКЕН ДЛЯ ТЕСТИРОВАНИЯ
+const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTY0MzMwMSwiaWQiOiIwMTkxZDYyZi0yYWFhLTcwN2UtOGMyMS0zZjY1NTczNjMyYTQiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.wNkYtKtCq7ekhVxE754sGW-xTOx_MfFBriDkYl_3BG-BRMwtlLXhnhZoOBmVb_WJNMCrBJ3QWiOPh16XsofFNw";
 
 // СПИСОК СКЛАДОВ, КОТОРЫЙ ПРИШЕЛ ИЗ API
 const warehousesOptions = ref([]);
@@ -53,6 +56,10 @@ const deliveryType = ref({
 const removeSC = ref(false);
 
 const filteredDataFinish = ref([]);
+
+// const firstArray = ref([]);
+// const secondArray = ref([]);
+// const thirdArray = ref([]);
 
 const getCurrentDateTime = () => {
   return new Date().toLocaleString();
@@ -110,6 +117,61 @@ const handleChange = (dates) => {
 // ФОРМАТ ОТОБРАЖЕНИЯ ДАТЫ
 const dateFormat = "DD.MM.YYYY";
 
+async function sendMessageToTelegram(options, status) {
+  const { date, coefficient, warehouseName, boxTypeName } = options;
+
+  const telegramToken = "7352486646:AAEiy58pLIrwIDqdndfp0qB2sCv07wMviSs";
+  const chatId = "514186798";
+  const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+
+  const acceptance = coefficient === 0 ? "Бесплатно" : `x${ coefficient }`;
+
+// const formattedMessage = `
+// ${ status ? '<span style="color: #e32636">*Лимит найден*</span>' : '*Лимит удалён*' }
+// ${ getCurrentDateTime() }
+//
+// *Дата:* ${ dayjs(date).format('DD.MM.YYYY') }
+// *Поставка:* ${ warehouseName }, ${ boxTypeName }
+// *Приёмка:* ${ acceptance }
+// `;
+//   const formattedMessage = `
+//     <span style="color: ${ status ? '#e32636' : '#2bae66' };"><b>${ status ? 'Лимит найден' : 'Лимит удалён' }</b></span>
+//     <span>${ getCurrentDateTime() }</span>
+//     <span><b>Дата:</b> ${ dayjs(date).format('DD.MM.YYYY') }</span>
+//     <span><b>Поставка:</b> ${ warehouseName }, ${ boxTypeName }</span>
+//     <span><b>Приёмка:</b> ${ acceptance }</span>
+//   `;
+
+const formattedMessage = `
+${ status ? '*Лимит найден 🟢*' : '*Лимит удалён 🔴*' }
+${ getCurrentDateTime() }
+
+*Дата:* ${ dayjs(date).format('DD.MM.YYYY') }
+*Поставка:* ${ warehouseName }, ${ boxTypeName }
+*Приёмка:* ${ acceptance }
+`;
+
+  try {
+    await axios.post(url, {
+      chat_id: chatId,
+      text: formattedMessage.trim(),
+      parse_mode: 'Markdown'
+    });
+    // alert('Сообщение отправлено!');
+  } catch (error) {
+    console.error('Ошибка отправки сообщения:', error);
+  }
+}
+
+// function compareArrays(arr1, arr2) {
+//   if (JSON.stringify(arr1) !== JSON.stringify(arr2)) {
+//     thirdArray.value = ['Arrays are not equal'];
+//     firstArray.value = arr2;
+//   } else {
+//     thirdArray.value = [];
+//   }
+// }
+
 function coefficientsGet() {
   const idsArray = matchedWarehouseIDs.value.map(warehouse => warehouse.ID);
   const paramsStr = idsArray.join(',');
@@ -138,13 +200,71 @@ function coefficientsGet() {
         return isDateValid && isCoefficientValid && isBoxTypeNameValid;
       });
 
+      // let sortedArray = filteredData.sort((a, b) => a.coefficient - b.coefficient);
+
+      // let sortedArray = filteredData.sort((a, b) => {
+      //   if (a.coefficient === b.coefficient) {
+      //     return new Date(a.date) - new Date(b.date);
+      //   }
+      //   return a.coefficient - b.coefficient;
+      // });
+
+
       // Вывод отфильтрованных элементов
       filteredDataFinish.value = filteredData;
     })
     .catch(error => {
       console.log(error);
     });
+
+
+
+  // const firstArray = ref([]);
+  // const secondArray = ref([]);
+  // const thirdArray = ref([]);
+  // filteredDataFinish.value.forEach(item => {
+  //   sendMessageToTelegram(item);
+  // })
 }
+
+// watch(filteredDataFinish, (newVal, oldVal) => {
+//   const addedItems = newVal.filter(item => !oldVal.includes(item));
+//   if (addedItems.length > 0) {
+//     console.log('Добавленные элементы:', addedItems);
+//   }
+// }, { deep: true });
+
+// watch(filteredDataFinish, (newVal, oldVal) => {
+//   if (oldVal.length === 0) return; // Пропускаем начальную инициализацию
+//   const addedItems = newVal.filter(item => !oldVal.includes(item));
+//   if (addedItems.length > 0) {
+//     console.log('Добавленные элементы:', addedItems);
+//   }
+// }, { deep: true });
+
+watch(filteredDataFinish, (newArray, oldArray) => {
+  // console.log('Старый массив:', oldArray);
+  // console.log('Новый массив:', newArray);
+
+  // Поиск отсутствующего элемента
+  for (let i = 0; i < oldArray.length; i++) {
+    if (!newArray.find(item => JSON.stringify(item) === JSON.stringify(oldArray[i]))) {
+      // console.log(Исчез элемент из массива:, oldArray[i]);
+      sendMessageToTelegram(oldArray[i], false);
+    }
+  }
+
+  // Проверка и вывод новых изменений
+  for (let i = 0; i < newArray.length; i++) {
+    if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
+      // console.log(`Изменения в элементе с индексом ${i}:, newArray[i]`);
+      // console.log(`Изменения ${newArray[i]}`);
+      console.log(`Изменения ${JSON.stringify(newArray[i], null, 2)}`);
+      sendMessageToTelegram(newArray[i], true);
+    }
+  }
+});
+
 
 // ПРИ НАЖАТИИ НА КНОПКУ ВЫБРАТЬ ВСЕ СКЛАДЫ, В warehousesSelected ДОБАВЛЯЕМ СКЛАДЫ
 function selectAllWarehouses() {
@@ -226,7 +346,7 @@ function startFilters() {
 const handleStart = () => {
   isRunning.value = true;
   startFilters();
-  timerId = setInterval(startFilters, 10000); // Вызывать функцию каждые 10 секунд
+  timerId = setInterval(startFilters, 15000); // Вызывать функцию каждые 10 секунд
 };
 
 const handleStop = () => {
