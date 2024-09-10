@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import {computed, ref, watch} from "vue";
 import axios from "axios";
 import { ConfigProvider as AConfigProvider } from "ant-design-vue";
 import ruRu from "ant-design-vue/es/locale/ru_RU";
@@ -11,7 +11,53 @@ let timerId = null;
 const isRunning = ref(false);
 
 // ТОКЕН ДЛЯ ДОСТУПА К API
-const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
+
+const companyArray = [
+  {
+    id: 1,
+    name: "ARANTA Art Supplies",
+    apiToken: "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg",
+    telegramToken: "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4",
+    chatId: "-4587468459",
+  },
+  {
+    id: 2,
+    name: "Sunflowers",
+    apiToken: "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTczMjQ1MSwiaWQiOiIwMTkxZGI3Zi03ZjVlLTcyZTgtYjVkYS02M2JiMjM3MmM4ODUiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwNzg0NjMsInMiOjEwMjYsInNpZCI6IjBmMzY0NjAzLWE4MWMtNDNhZC05MjliLTJhZjMxOWFhZTczYyIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.FWLQfZDGiGOEJBFZHrmo5F3Olw6Ms_9YQyqIIUJO2JCzNjoCRrOJMxhj-j1xiGA-lzMXEya9nO0IcJ2wNqk7ZA",
+    telegramToken: "6584534762:AAFtICID-IRygrU-pt_A_N7dA5ypkAwqCO8",
+    chatId: "-4585796755",
+  },
+  {
+    id: 3,
+    name: "Ne Vi",
+    apiToken: "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTczMjUzMiwiaWQiOiIwMTkxZGI4MC1iYzI3LTcxOTMtYTRhYS1iZGJiZWVhODQ2ZmUiLCJpaWQiOjE5NjI0NzM2LCJvaWQiOjQxMjc0NjcsInMiOjEwMjYsInNpZCI6Ijg0YjlkNmQzLTAxMTItNDBiZi05MTZiLWVlZDFkOGY3NjBhNSIsInQiOmZhbHNlLCJ1aWQiOjE5NjI0NzM2fQ.IEdxZFeC-HddNOUSY3mkzfJi7lp75ox4Xgu9j_yRLdKKNVOGDaxq3PqeA1bACAOth6wjZtYYPI39-T-Y3IT0Pw",
+    telegramToken: "7529315847:AAGkdEUV-4uZvsauYev3WAA06YxvGUuYsd0",
+    chatId: "-4562130542",
+  },
+];
+
+const transformedCompanyOptions = computed(() => {
+  return companyArray.map(company => ({
+    label: company.name,
+    value: JSON.stringify(company)
+  }));
+});
+
+const companyOptions = ref([]);
+
+const companySelected = ref(JSON.stringify(companyArray[0]));
+// Присвойте результат вычисляемого свойства transformedArray в массив companiesList
+companyOptions.value = transformedCompanyOptions.value;
+
+const transformedCompanySelected = computed(() => JSON.parse(companySelected.value));
+
+
+// const datesOptions = [
+//   {
+//     label: "14 дней",
+//     value: JSON.stringify({ from: 0, to: 14 })
+//   },
+// ];
 
 // ТОКЕН ДЛЯ ТЕСТИРОВАНИЯ
 // const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTY0MzMwMSwiaWQiOiIwMTkxZDYyZi0yYWFhLTcwN2UtOGMyMS0zZjY1NTczNjMyYTQiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.wNkYtKtCq7ekhVxE754sGW-xTOx_MfFBriDkYl_3BG-BRMwtlLXhnhZoOBmVb_WJNMCrBJ3QWiOPh16XsofFNw";
@@ -133,10 +179,10 @@ async function sendMessageToTelegram(options, status) {
   // const chatId = "-4518448769";
 
   // отправка в группу Артёма
-  const telegramToken = "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4";
-  const chatId = "-4587468459";
+  // const telegramToken = "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4";
+  // const chatId = "-4587468459";
 
-  const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+  const url = `https://api.telegram.org/bot${transformedCompanySelected.value.telegramToken}/sendMessage`;
 
   const acceptance = coefficient === 0 ? "Бесплатно" : `x${ coefficient }`;
 
@@ -167,7 +213,7 @@ ${ getCurrentDateTime() }
 
   try {
     await axios.post(url, {
-      chat_id: chatId,
+      chat_id: transformedCompanySelected.value.chatId,
       text: formattedMessage.trim(),
       parse_mode: 'Markdown'
     });
@@ -196,7 +242,7 @@ function coefficientsGet() {
       warehouseIDs: paramsStr
     },
     headers: {
-      "Authorization": `${apiToken}`
+      "Authorization": `${transformedCompanySelected.value.apiToken}`
     }
   })
     .then(response => {
@@ -226,6 +272,7 @@ function coefficientsGet() {
 
       // Вывод отфильтрованных элементов
       filteredDataFinish.value = filteredData;
+      // filteredDataFinish.value = sortedArray;
     })
     .catch(error => {
       console.log(error);
@@ -291,7 +338,7 @@ function selectAllWarehouses() {
 function receivingWarehousesBarcode(arrayGoods) {
   axios.post("https://supplies-api.wildberries.ru/api/v1/acceptance/options", arrayGoods, {
     headers: {
-      "Authorization": `${apiToken}`
+      "Authorization": `${transformedCompanySelected.value.apiToken}`
     }
   })
     .then(response => {
@@ -368,53 +415,69 @@ const handleStop = () => {
   clearInterval(timerId); // Остановить таймер
 };
 
+// const filteredDataFinishSorted = computed(() => filteredDataFinish.value.sort((a, b) => a.coefficient - b.coefficient));
 
 // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
-axios.get("https://supplies-api.wildberries.ru/api/v1/warehouses", {
-  headers: {
-    "Authorization": `${apiToken}`
-  }
-})
-  .then(response => {
-    warehousesOptions.value = response.data.map((warehouse) => ({
-      label: warehouse.name,
-      value: JSON.stringify(warehouse),
-    }));
-  })
-  .catch(error => {
-    console.log(error);
-  });
-
-// ПОЛУЧАЕМ ВЕСЬ СПИСОК НОМЕНКЛАТУР
-// (С ПАРАМЕТРАМИ: ФИЛЬТР ПО ФОТО - ВСЕ КАРТОЧКИ, ЛИМИТ - СКОЛЬКО КАРТОЧЕК ТОВАРА ВЕРНУТЬ)
-axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
-  settings: {
-    cursor: {
-      limit: 100
-    },
-    filter: {
-      withPhoto: -1
+watch(transformedCompanySelected, (newValue) => {
+  axios.get("https://supplies-api.wildberries.ru/api/v1/warehouses", {
+    headers: {
+      "Authorization": `${newValue.apiToken}`
     }
-  }
-}, {
-  headers: {
-    "Authorization": `${apiToken}`
-  }
-})
-  .then(response => {
-    nomenclatureOptions.value = response.data.cards.map((nomenclature) => ({
-      label: nomenclature.vendorCode,
-      value: JSON.stringify(nomenclature),
-    }));
   })
-  .catch(error => {
-    console.log(error);
-  });
+    .then(response => {
+      warehousesOptions.value = response.data.map((warehouse) => ({
+        label: warehouse.name,
+        value: JSON.stringify(warehouse),
+      }));
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  // ПОЛУЧАЕМ ВЕСЬ СПИСОК НОМЕНКЛАТУР
+// (С ПАРАМЕТРАМИ: ФИЛЬТР ПО ФОТО - ВСЕ КАРТОЧКИ, ЛИМИТ - СКОЛЬКО КАРТОЧЕК ТОВАРА ВЕРНУТЬ)
+  axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
+    settings: {
+      cursor: {
+        limit: 100
+      },
+      filter: {
+        withPhoto: -1
+      }
+    }
+  }, {
+    headers: {
+      "Authorization": `${newValue.apiToken}`
+    }
+  })
+    .then(response => {
+      nomenclatureOptions.value = response.data.cards.map((nomenclature) => ({
+        label: nomenclature.vendorCode,
+        value: JSON.stringify(nomenclature),
+      }));
+    })
+    .catch(error => {
+      console.log(error);
+    });
+}, { immediate: true });
 </script>
 
 <template>
   <a-config-provider :locale="ruRu">
     <a-form ref="form" layout="vertical">
+      <a-row :gutter="24">
+        <a-col :span="12">
+          <a-form-item label="Компания" name="companySelected">
+            <a-select
+              v-model:value="companySelected"
+              :options="companyOptions"
+              placeholder="Выберите из списка"
+              show-search
+            />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
       <a-row :gutter="24">
         <a-col :span="12">
           <a-form-item label="Склады" name="warehousesSelected">
@@ -426,8 +489,7 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
               placeholder="Выберите из списка"
               show-search
               allow-clear
-            >
-            </a-select>
+            />
           </a-form-item>
         </a-col>
 
@@ -449,8 +511,7 @@ axios.post("https://content-api.wildberries.ru/content/v2/get/cards/list", {
               placeholder="Выберите из списка"
               show-search
               allow-clear
-            >
-            </a-select>
+            />
           </a-form-item>
         </a-col>
       </a-row>
