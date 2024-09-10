@@ -120,10 +120,22 @@ const dateFormat = "DD.MM.YYYY";
 async function sendMessageToTelegram(options, status) {
   const { date, coefficient, warehouseName, boxTypeName } = options;
 
+  // мой бот
   // const telegramToken = "7352486646:AAEiy58pLIrwIDqdndfp0qB2sCv07wMviSs";
   // const chatId = "514186798";
+
+  // бот Артёма
+  // const telegramToken = "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4";
+  // const chatId = "428444661";
+
+  // // отправка в мою группу
+  // const telegramToken = "7352486646:AAEiy58pLIrwIDqdndfp0qB2sCv07wMviSs";
+  // const chatId = "-4518448769";
+
+  // отправка в группу Артёма
   const telegramToken = "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4";
-  const chatId = "428444661";
+  const chatId = "-4587468459";
+
   const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
 
   const acceptance = coefficient === 0 ? "Бесплатно" : `x${ coefficient }`;
@@ -261,7 +273,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
     if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
       // console.log(`Изменения в элементе с индексом ${i}:, newArray[i]`);
       // console.log(`Изменения ${newArray[i]}`);
-      console.log(`Изменения ${JSON.stringify(newArray[i], null, 2)}`);
+      // console.log(`Изменения ${JSON.stringify(newArray[i], null, 2)}`);
       sendMessageToTelegram(newArray[i], true);
     }
   }
@@ -348,7 +360,7 @@ function startFilters() {
 const handleStart = () => {
   isRunning.value = true;
   startFilters();
-  timerId = setInterval(startFilters, 15000); // Вызывать функцию каждые 10 секунд
+  timerId = setInterval(startFilters, 10500); // Вызывать функцию каждые 10 секунд
 };
 
 const handleStop = () => {
