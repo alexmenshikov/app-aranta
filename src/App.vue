@@ -11,10 +11,10 @@ let timerId = null;
 const isRunning = ref(false);
 
 // ТОКЕН ДЛЯ ДОСТУПА К API
-// const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
+const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTI5ODI5MywiaWQiOiIyOGUxZGRlNS1kMzU5LTQ4MDktYTY3OC04ZTdkNDdmZWIyNzgiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.ibhHx9zTX066nuHD6dBoTcf0tK3q0_Tv6vhpHFbk6-qmpgBAKmuP1_NXkCTe1vFqINILROWWj6Qx925YPlSUgg";
 
 // ТОКЕН ДЛЯ ТЕСТИРОВАНИЯ
-const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTY0MzMwMSwiaWQiOiIwMTkxZDYyZi0yYWFhLTcwN2UtOGMyMS0zZjY1NTczNjMyYTQiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.wNkYtKtCq7ekhVxE754sGW-xTOx_MfFBriDkYl_3BG-BRMwtlLXhnhZoOBmVb_WJNMCrBJ3QWiOPh16XsofFNw";
+// const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTY0MzMwMSwiaWQiOiIwMTkxZDYyZi0yYWFhLTcwN2UtOGMyMS0zZjY1NTczNjMyYTQiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.wNkYtKtCq7ekhVxE754sGW-xTOx_MfFBriDkYl_3BG-BRMwtlLXhnhZoOBmVb_WJNMCrBJ3QWiOPh16XsofFNw";
 
 // СПИСОК СКЛАДОВ, КОТОРЫЙ ПРИШЕЛ ИЗ API
 const warehousesOptions = ref([]);
@@ -120,8 +120,10 @@ const dateFormat = "DD.MM.YYYY";
 async function sendMessageToTelegram(options, status) {
   const { date, coefficient, warehouseName, boxTypeName } = options;
 
-  const telegramToken = "7352486646:AAEiy58pLIrwIDqdndfp0qB2sCv07wMviSs";
-  const chatId = "514186798";
+  // const telegramToken = "7352486646:AAEiy58pLIrwIDqdndfp0qB2sCv07wMviSs";
+  // const chatId = "514186798";
+  const telegramToken = "7397979520:AAFH3aY5u-PO9OOegXDl_5hvv1PLUp_3eQ4";
+  const chatId = "428444661";
   const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
 
   const acceptance = coefficient === 0 ? "Бесплатно" : `x${ coefficient }`;
