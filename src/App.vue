@@ -1,16 +1,24 @@
 <script setup>
-import {computed, ref, watch} from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
-import { ConfigProvider as AConfigProvider } from "ant-design-vue";
+import {
+  Button as AButton,
+  Checkbox as ACheckbox,
+  Col as ACol,
+  ConfigProvider as AConfigProvider,
+  Form as AForm,
+  FormItem as AFormItem,
+  Input as AInput,
+  RangePicker as ARangePicker,
+  Row as ARow,
+  Select as ASelect,
+  Table as ATable
+} from "ant-design-vue";
 import ruRu from "ant-design-vue/es/locale/ru_RU";
 import dayjs from "dayjs";
 import ru from "dayjs/locale/ru";
+
 dayjs.locale(ru);
-
-let timerId = null;
-const isRunning = ref(false);
-
-// ТОКЕН ДЛЯ ДОСТУПА К API
 
 const companyArray = [
   {
@@ -43,55 +51,63 @@ const transformedCompanyOptions = computed(() => {
   }));
 });
 
+let timerId = null;
+const isRunning = ref(false);
+
 const companyOptions = ref([]);
 
 const companySelected = ref(JSON.stringify(companyArray[0]));
-// Присвойте результат вычисляемого свойства transformedArray в массив companiesList
+
 companyOptions.value = transformedCompanyOptions.value;
 
 const transformedCompanySelected = computed(() => JSON.parse(companySelected.value));
 
+watch(transformedCompanySelected, () => {
+  initValues();
+})
 
-// const datesOptions = [
-//   {
-//     label: "14 дней",
-//     value: JSON.stringify({ from: 0, to: 14 })
-//   },
-// ];
+const columns =  ref([
+  {
+    title: 'Время нахождения лимита',
+    dataIndex: 'currentDateTime',
+    key: 'currentDateTime',
+    width: '20%',
+  },
+  {
+    title: 'Дата',
+    dataIndex: 'date',
+    key: 'date',
+    width: '10%',
+  },
+  {
+    title: 'Коэффициент',
+    dataIndex: 'coefficient',
+    key: 'coefficient',
+    width: '05%',
+  },
+  {
+    title: 'Склад',
+    dataIndex: 'warehouseName',
+    key: 'warehouseName',
+    width: '25%',
+  },
+  {
+    title: 'Тип поставки',
+    dataIndex: 'boxTypeName',
+    key: 'boxTypeName',
+    width: '35%',
+  },
+]);
 
-// ТОКЕН ДЛЯ ТЕСТИРОВАНИЯ
-// const apiToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQwOTA0djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0MTY0MzMwMSwiaWQiOiIwMTkxZDYyZi0yYWFhLTcwN2UtOGMyMS0zZjY1NTczNjMyYTQiLCJpaWQiOjk2OTgyNDY4LCJvaWQiOjQwMTg1MzQsInMiOjEwMjYsInNpZCI6ImRjZTNhNzQ5LWU0ZmQtNDkwMC1iYmYyLWJjMzYyODNkOTk4MCIsInQiOmZhbHNlLCJ1aWQiOjk2OTgyNDY4fQ.wNkYtKtCq7ekhVxE754sGW-xTOx_MfFBriDkYl_3BG-BRMwtlLXhnhZoOBmVb_WJNMCrBJ3QWiOPh16XsofFNw";
-
-// СПИСОК СКЛАДОВ, КОТОРЫЙ ПРИШЕЛ ИЗ API
-const warehousesOptions = ref([]);
-
-// СПИСОК СКЛАДОВ, КОТОРЫЕ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
-const warehousesSelected = ref([]);
-
-// СПИСОК НОМЕНКЛАТУР, КОТОРЫЙ ПРИШЕЛ ИЗ API
-const nomenclatureOptions = ref([]);
-
-// СПИСОК НОМЕНКЛАТУР, КОТОРЫЕ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
-const nomenclatureSelected = ref([]);
-
-// КОЛИЧЕСТВО ПОЗИЦИЙ
-const numberPositions = ref(1);
-
-// КОЭФФИЦИЕНТ ОТ
-const coefficientFrom = ref(0);
-
-// КОЭФФИЦИЕНТ ДО
-const coefficientTo = ref(2);
-// const warehousesFiltered = ref([]);
-
-const matchedWarehouseIDs = ref([]);
-const unmatchedWarehouseIDs = ref([]);
-
-// ЗНАЧЕНИЕ ДАТЫ
-const dates = ref([]);
-
-// ДАТА, КОТОРУЮ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
-const datesSelected = ref(null);
+const columnsData = computed(() => {
+  return filteredDataFinish.value.map((dataItem) => ({
+    currentDateTime: getCurrentDateTime(),
+    date: dayjs(dataItem.date).format('DD.MM.YYYY'),
+    coefficient: dataItem.coefficient === 0 ? "Бесплатно" : `x${ dataItem.coefficient }`,
+    warehouseName: dataItem.warehouseName,
+    boxTypeName: dataItem.boxTypeName,
+  }));
+});
 
 const deliveryType = ref({
   canBox: false,
@@ -99,16 +115,110 @@ const deliveryType = ref({
   canSupersafe: false,
 });
 
+function fieldCompanies(fieldName) {
+  return `${transformedCompanySelected.value.name.replaceAll(" ", "")}_${fieldName}`
+}
+
+watch(deliveryType, (newValue) => {
+  localStorage.setItem(fieldCompanies("delivery-type"), JSON.stringify(newValue));
+}, { deep: true });
+
+function initValues() {
+  const getWarehouses = localStorage.getItem(fieldCompanies("warehouses"));
+  warehousesSelected.value = JSON.parse(getWarehouses) || [];
+
+  const getNomenclature = localStorage.getItem(fieldCompanies("nomenclature"));
+  nomenclatureSelected.value = JSON.parse(getNomenclature) || [];
+
+  const getRemoveSC = localStorage.getItem(fieldCompanies("sc"));
+  removeSC.value = getRemoveSC === "true";
+
+  const getDeliveryType = localStorage.getItem(fieldCompanies("delivery-type"));
+  deliveryType.value = JSON.parse(getDeliveryType) || deliveryType.value;
+
+  const getNumberPosition = localStorage.getItem(fieldCompanies("number-positions"));
+  numberPositions.value = JSON.parse(getNumberPosition) || 1;
+
+  const getCoefficientFrom = localStorage.getItem(fieldCompanies("coefficient-from"));
+  coefficientFrom.value = JSON.parse(getCoefficientFrom) || 0;
+
+  const getCoefficientTo = localStorage.getItem(fieldCompanies("coefficient-to"));
+  coefficientTo.value = JSON.parse(getCoefficientTo) || 2;
+
+  const getDatesSelected = localStorage.getItem(fieldCompanies("dates-selected"));
+  datesSelected.value = JSON.parse(getDatesSelected);
+
+  dates.value = datesSelected.value ? creatingDateRange(JSON.parse(datesSelected.value)) : [];
+}
+
+onMounted(() => {
+  initValues();
+});
+
+// СПИСОК СКЛАДОВ, КОТОРЫЙ ПРИШЕЛ ИЗ API
+const warehousesOptions = ref([]);
+
+// СПИСОК СКЛАДОВ, КОТОРЫЕ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
+const warehousesSelected = ref([]);
+
+watch(warehousesSelected, (newValue) => {
+  localStorage.setItem(fieldCompanies("warehouses"), JSON.stringify(newValue));
+});
+
+// СПИСОК НОМЕНКЛАТУР, КОТОРЫЙ ПРИШЕЛ ИЗ API
+const nomenclatureOptions = ref([]);
+
+// СПИСОК НОМЕНКЛАТУР, КОТОРЫЕ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
+const nomenclatureSelected = ref([]);
+
+watch(nomenclatureSelected, (newValue) => {
+  localStorage.setItem(fieldCompanies("nomenclature"), JSON.stringify(newValue));
+});
+
 const removeSC = ref(false);
+
+watch(removeSC, (newValue) => {
+  localStorage.setItem(fieldCompanies("sc"), newValue);
+});
+
+// КОЛИЧЕСТВО ПОЗИЦИЙ
+const numberPositions = ref(1);
+
+watch(numberPositions, (newValue) => {
+  localStorage.setItem(fieldCompanies("number-positions"), newValue);
+});
+
+// КОЭФФИЦИЕНТ ОТ
+const coefficientFrom = ref(0);
+
+watch(coefficientFrom, (newValue) => {
+  localStorage.setItem(fieldCompanies("coefficient-from"), newValue);
+});
+
+// КОЭФФИЦИЕНТ ДО
+const coefficientTo = ref(2);
+
+watch(coefficientTo, (newValue) => {
+  localStorage.setItem(fieldCompanies("coefficient-to"), newValue);
+});
+
+const matchedWarehouseIDs = ref([]);
+const unmatchedWarehouseIDs = ref([]);
+
+// ДАТА, КОТОРУЮ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
+const datesSelected = ref(null);
+
+watch(datesSelected, (newValue) => {
+  localStorage.setItem(fieldCompanies("dates-selected"), newValue ? JSON.stringify(newValue) : JSON.stringify(null));
+});
+
+// ЗНАЧЕНИЕ ДАТЫ
+const dates = ref([]);
 
 const filteredDataFinish = ref([]);
 
-// const firstArray = ref([]);
-// const secondArray = ref([]);
-// const thirdArray = ref([]);
-
 const getCurrentDateTime = () => {
-  return new Date().toLocaleString();
+  return new Date().toLocaleTimeString(navigator.language);
 };
 
 // РУЗУЛЬТАТ ФИЛЬТРА, СКЛАДЫ КОТОРЫЕ ПОДХОДЯТ ДЛЯ ТОВАРА, С ТИПОМ УПАКОВКИ КОРОБ И МОНОПАЛЛЕТ
@@ -272,56 +382,26 @@ function coefficientsGet() {
 
       // Вывод отфильтрованных элементов
       filteredDataFinish.value = filteredData;
-      // filteredDataFinish.value = sortedArray;
     })
     .catch(error => {
       console.log(error);
     });
-
-
-
-  // const firstArray = ref([]);
-  // const secondArray = ref([]);
-  // const thirdArray = ref([]);
-  // filteredDataFinish.value.forEach(item => {
-  //   sendMessageToTelegram(item);
-  // })
 }
 
-// watch(filteredDataFinish, (newVal, oldVal) => {
-//   const addedItems = newVal.filter(item => !oldVal.includes(item));
-//   if (addedItems.length > 0) {
-//     console.log('Добавленные элементы:', addedItems);
-//   }
-// }, { deep: true });
-
-// watch(filteredDataFinish, (newVal, oldVal) => {
-//   if (oldVal.length === 0) return; // Пропускаем начальную инициализацию
-//   const addedItems = newVal.filter(item => !oldVal.includes(item));
-//   if (addedItems.length > 0) {
-//     console.log('Добавленные элементы:', addedItems);
-//   }
-// }, { deep: true });
-
 watch(filteredDataFinish, (newArray, oldArray) => {
-  // console.log('Старый массив:', oldArray);
-  // console.log('Новый массив:', newArray);
-
   // Поиск отсутствующего элемента
   for (let i = 0; i < oldArray.length; i++) {
     if (!newArray.find(item => JSON.stringify(item) === JSON.stringify(oldArray[i]))) {
-      // console.log(Исчез элемент из массива:, oldArray[i]);
-      sendMessageToTelegram(oldArray[i], false);
+
+      // sendMessageToTelegram(oldArray[i], false);
     }
   }
 
   // Проверка и вывод новых изменений
   for (let i = 0; i < newArray.length; i++) {
     if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
-      // console.log(`Изменения в элементе с индексом ${i}:, newArray[i]`);
-      // console.log(`Изменения ${newArray[i]}`);
-      // console.log(`Изменения ${JSON.stringify(newArray[i], null, 2)}`);
-      sendMessageToTelegram(newArray[i], true);
+
+      // sendMessageToTelegram(newArray[i], true);
     }
   }
 });
@@ -415,8 +495,6 @@ const handleStop = () => {
   clearInterval(timerId); // Остановить таймер
 };
 
-// const filteredDataFinishSorted = computed(() => filteredDataFinish.value.sort((a, b) => a.coefficient - b.coefficient));
-
 // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
 watch(transformedCompanySelected, (newValue) => {
   axios.get("https://supplies-api.wildberries.ru/api/v1/warehouses", {
@@ -425,7 +503,12 @@ watch(transformedCompanySelected, (newValue) => {
     }
   })
     .then(response => {
-      warehousesOptions.value = response.data.map((warehouse) => ({
+      const transformData = response.data.map((warehouse) => ({
+        ID: warehouse.ID,
+        name: warehouse.name,
+      }));
+
+      warehousesOptions.value = transformData.map((warehouse) => ({
         label: warehouse.name,
         value: JSON.stringify(warehouse),
       }));
@@ -451,7 +534,12 @@ watch(transformedCompanySelected, (newValue) => {
     }
   })
     .then(response => {
-      nomenclatureOptions.value = response.data.cards.map((nomenclature) => ({
+      const transformData = response.data.cards.map((card) => ({
+        vendorCode: card.vendorCode,
+        sizes: card.sizes,
+      }));
+
+      nomenclatureOptions.value = transformData.map((nomenclature) => ({
         label: nomenclature.vendorCode,
         value: JSON.stringify(nomenclature),
       }));
@@ -642,22 +730,7 @@ watch(transformedCompanySelected, (newValue) => {
       </a-row>
     </a-form>
 
-    <div v-if="filteredDataFinish.length > 0">
-      <b>Подходят склады:</b>
-      <div v-for="(item, index) in filteredDataFinish" :key="index"
-           :style="{ 'background-color': item.coefficient === 0 ? '#cafcca' : (item.coefficient === 1 ? '#fafad2' : '') }"
-      >
-        Время: {{ getCurrentDateTime() }} - Коэффициент: {{ item.coefficient }} - Дата: {{ dayjs(item.date).format('DD.MM.YYYY') }} - Склад: {{item.warehouseName }} - Поставка: {{ item.boxTypeName }}
-      </div>
-    </div>
-
-    <hr v-if="matchedWarehouseIDs.length > 0 && unmatchedWarehouseIDs.length > 0">
-    <div v-if="unmatchedWarehouseIDs.length > 0">
-      <b>Неподходят склады:</b>
-      <div v-for="(item, index) in unmatchedWarehouseIDs" :key="item.ID">
-        {{ index+1 }}: {{ item.name }}
-      </div>
-    </div>
+    <a-table :data-source="columnsData" :columns="columns" />
   </a-config-provider>
 </template>
 
