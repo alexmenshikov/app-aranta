@@ -393,7 +393,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < oldArray.length; i++) {
     if (!newArray.find(item => JSON.stringify(item) === JSON.stringify(oldArray[i]))) {
 
-      // sendMessageToTelegram(oldArray[i], false);
+      sendMessageToTelegram(oldArray[i], false);
     }
   }
 
@@ -401,7 +401,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < newArray.length; i++) {
     if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
 
-      // sendMessageToTelegram(newArray[i], true);
+      sendMessageToTelegram(newArray[i], true);
     }
   }
 });
