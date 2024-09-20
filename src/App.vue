@@ -1,15 +1,15 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import axios from "axios";
 import {
   Button as AButton,
   Checkbox as ACheckbox,
   Col as ACol,
   ConfigProvider as AConfigProvider,
+  DatePicker as ADatePicker,
   Form as AForm,
   FormItem as AFormItem,
   Input as AInput,
-  RangePicker as ARangePicker,
   Row as ARow,
   Select as ASelect,
   Table as ATable
@@ -17,8 +17,10 @@ import {
 import ruRu from "ant-design-vue/es/locale/ru_RU";
 import dayjs from "dayjs";
 import ru from "dayjs/locale/ru";
+import utc from "dayjs/plugin/utc";
 
 dayjs.locale(ru);
+dayjs.extend(utc);
 
 const companyArray = [
   {
@@ -145,10 +147,11 @@ function initValues() {
   const getCoefficientTo = localStorage.getItem(fieldCompanies("coefficient-to"));
   coefficientTo.value = JSON.parse(getCoefficientTo) || 2;
 
-  const getDatesSelected = localStorage.getItem(fieldCompanies("dates-selected"));
-  datesSelected.value = JSON.parse(getDatesSelected);
+  // const getDatesSelected = localStorage.getItem(fieldCompanies("dates-selected"));
+  // datesSelected.value = JSON.parse(getDatesSelected);
+  //
+  // dates.value = datesSelected.value ? creatingDateRange(JSON.parse(datesSelected.value)) : [];
 
-  dates.value = datesSelected.value ? creatingDateRange(JSON.parse(datesSelected.value)) : [];
 }
 
 onMounted(() => {
@@ -206,14 +209,13 @@ const matchedWarehouseIDs = ref([]);
 const unmatchedWarehouseIDs = ref([]);
 
 // ДАТА, КОТОРУЮ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
-const datesSelected = ref(null);
+// const datesSelected = ref(null);
+//
+// watch(datesSelected, (newValue) => {
+//   localStorage.setItem(fieldCompanies("dates-selected"), newValue ? JSON.stringify(newValue) : JSON.stringify(null));
+// });
 
-watch(datesSelected, (newValue) => {
-  localStorage.setItem(fieldCompanies("dates-selected"), newValue ? JSON.stringify(newValue) : JSON.stringify(null));
-});
-
-// ЗНАЧЕНИЕ ДАТЫ
-const dates = ref([]);
+const startingDate = ref(dayjs().utc().startOf('day'));
 
 const filteredDataFinish = ref([]);
 
@@ -224,51 +226,10 @@ const getCurrentDateTime = () => {
 // РУЗУЛЬТАТ ФИЛЬТРА, СКЛАДЫ КОТОРЫЕ ПОДХОДЯТ ДЛЯ ТОВАРА, С ТИПОМ УПАКОВКИ КОРОБ И МОНОПАЛЛЕТ
 const warehousesGoodsTypePackagingBoxMonopallets = ref([]);
 
-// ИЗМЕНЕНИИ ДАТЫ, В ЗАВИСИМОСТИ ОТ ВЫБРАННОГО СЕЛЕКТ (14 ДНЕЙ, ПЕРВАЯ НЕДЕЛЯ, ВТОРАЯ НЕДЕЛЯ)
-function changeDatesOptions(event) {
-  typeof event === "string" ? dates.value = creatingDateRange(JSON.parse(event)) : dates.value = [];
-}
-
-// СПИСОК ВАРИАНТОВ ДАТ
-const datesOptions = [
-  {
-    label: "14 дней",
-    value: JSON.stringify({ from: 0, to: 14 })
-  },
-  {
-    label: "Первая неделя",
-    value: JSON.stringify({ from: 0, to: 7 })
-  },
-  {
-    label: "Вторая неделя",
-    value: JSON.stringify({ from: 7, to: 14 })
-  }
-];
-
-// ФУНКЦИЯ ЗАДАЁТ ЗНАЧЕНИЕ ДАТЫ В ЗАВИСИМОСТИ ОТ ВЫБОРА ПОЛЬЗОВАТЕЛЯ
-function creatingDateRange(options) {
-  const { from, to } = options;
-
-  const currentDate = new Date();
-  const utcTime = Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate(), 0, 0, 0, 0);
-  const utcCurrentDate = new Date(utcTime);
-
-  const futureDateFirst = new Date(utcCurrentDate);
-  const futureDateSecond = new Date(utcCurrentDate);
-
-  futureDateFirst.setUTCDate(utcCurrentDate.getUTCDate() + from);
-  futureDateSecond.setUTCDate(utcCurrentDate.getUTCDate() + to);
-
-  return [
-    dayjs(futureDateFirst.toISOString()),
-    dayjs(futureDateSecond.toISOString())
-  ]
-}
-
-// СБРАСЫВАЕТ СЕЛЕКТ С ДАТАМИ, ЕСЛИ ПОЛЬЗОВАТЕЛЬ, ВЫБРАЛ СВОЙ ВАРИАНТ
-const handleChange = (dates) => {
-  datesSelected.value = null;
-}
+const presets = ref([
+  { label: 'Сегодня', value: dayjs().utc().add(0, 'day').startOf('day') },
+  { label: 'Следующая неделя', value: dayjs().utc().add(7, 'day').startOf('day') },
+]);
 
 // ФОРМАТ ОТОБРАЖЕНИЯ ДАТЫ
 const dateFormat = "DD.MM.YYYY";
@@ -296,22 +257,6 @@ async function sendMessageToTelegram(options, status) {
 
   const acceptance = coefficient === 0 ? "Бесплатно" : `x${ coefficient }`;
 
-// const formattedMessage = `
-// ${ status ? '<span style="color: #e32636">*Лимит найден*</span>' : '*Лимит удалён*' }
-// ${ getCurrentDateTime() }
-//
-// *Дата:* ${ dayjs(date).format('DD.MM.YYYY') }
-// *Поставка:* ${ warehouseName }, ${ boxTypeName }
-// *Приёмка:* ${ acceptance }
-// `;
-//   const formattedMessage = `
-//     <span style="color: ${ status ? '#e32636' : '#2bae66' };"><b>${ status ? 'Лимит найден' : 'Лимит удалён' }</b></span>
-//     <span>${ getCurrentDateTime() }</span>
-//     <span><b>Дата:</b> ${ dayjs(date).format('DD.MM.YYYY') }</span>
-//     <span><b>Поставка:</b> ${ warehouseName }, ${ boxTypeName }</span>
-//     <span><b>Приёмка:</b> ${ acceptance }</span>
-//   `;
-
 const formattedMessage = `
 ${ status ? '*Лимит найден 🟢*' : '*Лимит удалён 🔴*' }
 ${ getCurrentDateTime() }
@@ -333,15 +278,6 @@ ${ getCurrentDateTime() }
   }
 }
 
-// function compareArrays(arr1, arr2) {
-//   if (JSON.stringify(arr1) !== JSON.stringify(arr2)) {
-//     thirdArray.value = ['Arrays are not equal'];
-//     firstArray.value = arr2;
-//   } else {
-//     thirdArray.value = [];
-//   }
-// }
-
 function coefficientsGet() {
   const idsArray = matchedWarehouseIDs.value.map(warehouse => warehouse.ID);
   const paramsStr = idsArray.join(',');
@@ -358,7 +294,7 @@ function coefficientsGet() {
     .then(response => {
       const filteredData = response.data.filter(item => {
         // Сравнение date с датами из массива dates
-        const isDateValid = dayjs(item.date) >= dayjs(dates.value[0]) && dayjs(item.date) <= dayjs(dates.value[1]);
+        const isDateValid = dayjs(item.date) >= dayjs(startingDate.value);
 
         // Сравнение coefficient с coefficientFrom и coefficientTo
         const isCoefficientValid = item.coefficient >= coefficientFrom.value && item.coefficient <= coefficientTo.value;
@@ -393,7 +329,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < oldArray.length; i++) {
     if (!newArray.find(item => JSON.stringify(item) === JSON.stringify(oldArray[i]))) {
 
-      sendMessageToTelegram(oldArray[i], false);
+      // sendMessageToTelegram(oldArray[i], false);
     }
   }
 
@@ -401,7 +337,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < newArray.length; i++) {
     if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
 
-      sendMessageToTelegram(newArray[i], true);
+      // sendMessageToTelegram(newArray[i], true);
     }
   }
 });
@@ -487,12 +423,18 @@ function startFilters() {
 const handleStart = () => {
   isRunning.value = true;
   startFilters();
-  timerId = setInterval(startFilters, 10500); // Вызывать функцию каждые 10 секунд
+  timerId = setInterval(startFilters, 11500); // Вызывать функцию каждые 10 секунд
 };
 
 const handleStop = () => {
   isRunning.value = false;
   clearInterval(timerId); // Остановить таймер
+};
+
+const onDateChange = (date) => {
+  if (date) {
+    startingDate.value = date.startOf('day');
+  }
 };
 
 // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
@@ -568,7 +510,7 @@ watch(transformedCompanySelected, (newValue) => {
 
       <a-row :gutter="24">
         <a-col :span="12">
-          <a-form-item label="Склады" name="warehousesSelected">
+          <a-form-item label="Склад" name="warehousesSelected">
             <a-select
               v-model:value="warehousesSelected"
               :options="warehousesOptions"
@@ -674,27 +616,28 @@ watch(transformedCompanySelected, (newValue) => {
         </a-col>
       </a-row>
       <a-row :gutter="24">
-        <a-col :span="6">
-          <a-form-item label="Выбор недель" name="warehousesSelected"
-          >
-            <a-select
-              v-model:value="datesSelected"
-              :options="datesOptions"
-              @change="changeDatesOptions"
-              placeholder="Выберите из списка"
-              allow-clear
-            >
-            </a-select>
-          </a-form-item>
-        </a-col>
+<!--        <a-col :span="6">-->
+<!--          <a-form-item label="Начиная с" name="warehousesSelected"-->
+<!--          >-->
+<!--            <a-select-->
+<!--              v-model:value="datesSelected"-->
+<!--              :options="datesOptions"-->
+<!--              @change="changeDatesOptions"-->
+<!--              placeholder="Выберите из списка"-->
+<!--              allow-clear-->
+<!--            >-->
+<!--            </a-select>-->
+<!--          </a-form-item>-->
+<!--        </a-col>-->
 
         <a-col :span="6">
-          <a-form-item label="Даты" name="warehousesSelected"
+          <a-form-item label="Начиная с даты" name="warehousesSelected"
           >
-            <a-range-picker
-              v-model:value="dates"
+            <a-date-picker
+              v-model:value="startingDate"
               :format="dateFormat"
-              @change="handleChange"
+              :presets="presets"
+              @change="onDateChange"
             />
           </a-form-item>
         </a-col>
