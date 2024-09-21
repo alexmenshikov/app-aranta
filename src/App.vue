@@ -146,12 +146,6 @@ function initValues() {
 
   const getCoefficientTo = localStorage.getItem(fieldCompanies("coefficient-to"));
   coefficientTo.value = JSON.parse(getCoefficientTo) || 2;
-
-  // const getDatesSelected = localStorage.getItem(fieldCompanies("dates-selected"));
-  // datesSelected.value = JSON.parse(getDatesSelected);
-  //
-  // dates.value = datesSelected.value ? creatingDateRange(JSON.parse(datesSelected.value)) : [];
-
 }
 
 onMounted(() => {
@@ -207,13 +201,6 @@ watch(coefficientTo, (newValue) => {
 
 const matchedWarehouseIDs = ref([]);
 const unmatchedWarehouseIDs = ref([]);
-
-// ДАТА, КОТОРУЮ ВЫБРАЛ ПОЛЬЗОВАТЕЛЬ
-// const datesSelected = ref(null);
-//
-// watch(datesSelected, (newValue) => {
-//   localStorage.setItem(fieldCompanies("dates-selected"), newValue ? JSON.stringify(newValue) : JSON.stringify(null));
-// });
 
 const startingDate = ref(dayjs().utc().startOf('day'));
 
@@ -306,16 +293,6 @@ function coefficientsGet() {
         return isDateValid && isCoefficientValid && isBoxTypeNameValid;
       });
 
-      // let sortedArray = filteredData.sort((a, b) => a.coefficient - b.coefficient);
-
-      // let sortedArray = filteredData.sort((a, b) => {
-      //   if (a.coefficient === b.coefficient) {
-      //     return new Date(a.date) - new Date(b.date);
-      //   }
-      //   return a.coefficient - b.coefficient;
-      // });
-
-
       // Вывод отфильтрованных элементов
       filteredDataFinish.value = filteredData;
     })
@@ -329,7 +306,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < oldArray.length; i++) {
     if (!newArray.find(item => JSON.stringify(item) === JSON.stringify(oldArray[i]))) {
 
-      // sendMessageToTelegram(oldArray[i], false);
+      sendMessageToTelegram(oldArray[i], false);
     }
   }
 
@@ -337,7 +314,7 @@ watch(filteredDataFinish, (newArray, oldArray) => {
   for (let i = 0; i < newArray.length; i++) {
     if (JSON.stringify(newArray[i]) !== JSON.stringify(oldArray[i])) {
 
-      // sendMessageToTelegram(newArray[i], true);
+      sendMessageToTelegram(newArray[i], true);
     }
   }
 });
@@ -599,6 +576,18 @@ watch(transformedCompanySelected, (newValue) => {
           </a-form-item>
         </a-col>
 
+        <a-col :span="4">
+          <a-form-item label="Начиная с даты" name="warehousesSelected"
+          >
+            <a-date-picker
+              v-model:value="startingDate"
+              :format="dateFormat"
+              :presets="presets"
+              @change="onDateChange"
+            />
+          </a-form-item>
+        </a-col>
+
         <a-col :span="3">
           <a-form-item label="Тип поставки" name="canBox">
             <a-checkbox v-model:checked="deliveryType.canBox">
@@ -612,33 +601,6 @@ watch(transformedCompanySelected, (newValue) => {
             <a-checkbox v-model:checked="deliveryType.canMonopallet">
               Монопаллет
             </a-checkbox>
-          </a-form-item>
-        </a-col>
-      </a-row>
-      <a-row :gutter="24">
-<!--        <a-col :span="6">-->
-<!--          <a-form-item label="Начиная с" name="warehousesSelected"-->
-<!--          >-->
-<!--            <a-select-->
-<!--              v-model:value="datesSelected"-->
-<!--              :options="datesOptions"-->
-<!--              @change="changeDatesOptions"-->
-<!--              placeholder="Выберите из списка"-->
-<!--              allow-clear-->
-<!--            >-->
-<!--            </a-select>-->
-<!--          </a-form-item>-->
-<!--        </a-col>-->
-
-        <a-col :span="6">
-          <a-form-item label="Начиная с даты" name="warehousesSelected"
-          >
-            <a-date-picker
-              v-model:value="startingDate"
-              :format="dateFormat"
-              :presets="presets"
-              @change="onDateChange"
-            />
           </a-form-item>
         </a-col>
       </a-row>
