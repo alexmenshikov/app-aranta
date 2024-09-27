@@ -266,7 +266,9 @@ ${ getCurrentDateTime() }
 }
 
 function coefficientsGet() {
-  const idsArray = matchedWarehouseIDs.value.map(warehouse => warehouse.ID);
+  // const idsArray = matchedWarehouseIDs.value.map(warehouse => warehouse.ID);
+  const warehousesSelectedParse = warehousesSelected.value.map(warehouse => JSON.parse(warehouse));
+  const idsArray = warehousesSelectedParse.map(warehouse => warehouse.ID);
   const paramsStr = idsArray.join(',');
 
   // ПОЛУЧАЕМ ВЕСЬ СПИСОК СКЛАДОВ (БЕЗ ПАРАМЕТРОВ)
@@ -385,16 +387,17 @@ function startFilters() {
   matchedWarehouseIDs.value = [];
   unmatchedWarehouseIDs.value = [];
 
-  const arrayGoods = nomenclatureSelected.value
-    .map(nomenclature => JSON.parse(nomenclature))
-    .flatMap(nomenclatureObject => nomenclatureObject.sizes ?? [])
-    .flatMap(sizeItem => sizeItem.skus ?? [])
-    .map(skusItem => ({
-      quantity: numberPositions.value,
-      barcode: skusItem
-    }));
+  // const arrayGoods = nomenclatureSelected.value
+  //   .map(nomenclature => JSON.parse(nomenclature))
+  //   .flatMap(nomenclatureObject => nomenclatureObject.sizes ?? [])
+  //   .flatMap(sizeItem => sizeItem.skus ?? [])
+  //   .map(skusItem => ({
+  //     quantity: numberPositions.value,
+  //     barcode: skusItem
+  //   }));
+  coefficientsGet();
 
-  receivingWarehousesBarcode(arrayGoods);
+  // receivingWarehousesBarcode(arrayGoods);
 }
 
 const handleStart = () => {
@@ -518,6 +521,7 @@ watch(transformedCompanySelected, (newValue) => {
               placeholder="Выберите из списка"
               show-search
               allow-clear
+              disabled
             />
           </a-form-item>
         </a-col>
@@ -571,6 +575,7 @@ watch(transformedCompanySelected, (newValue) => {
             <a-input
               v-model:value.number="numberPositions"
               placeholder="Колличество"
+              disabled
             >
             </a-input>
           </a-form-item>
